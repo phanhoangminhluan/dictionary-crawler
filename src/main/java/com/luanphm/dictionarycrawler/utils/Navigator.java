@@ -5,25 +5,41 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
+import io.github.bonigarcia.wdm.ChromeDriverManager;
+import org.openqa.selenium.chrome.ChromeOptions;
+
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class Navigator {
+public class Navigator implements Cloneable{
 
-    public final WebDriver driver;
+    protected static WebDriver driver;
 
     public Navigator() {
-        driver = new ChromeDriver();
+
+        ChromeDriverManager.getInstance(WebDriver.class);
+        ChromeOptions chromeOptions = new ChromeOptions();
+
+        chromeOptions.addArguments("--headless");
+        driver = new ChromeDriver(chromeOptions);
     }
     public Navigator(String chromeDriverUrl) {
         System.setProperty("webdriver.chrome.driver", chromeDriverUrl);
-        driver = new ChromeDriver();
-        driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+
+        ChromeDriverManager.getInstance(WebDriver.class);
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.addArguments("--headless");
+
+        driver = new ChromeDriver(chromeOptions);
+        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+
     }
 
-    public void navigateTo(String url) {
-        driver.navigate().to(url);
+    public void navigateTo(String url) throws ConnectException {
+        driver.get(url);
+
     }
 
     public String getText(String cssSelector) {
@@ -94,5 +110,10 @@ public class Navigator {
 
     public WebDriver getDriver() {
         return driver;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

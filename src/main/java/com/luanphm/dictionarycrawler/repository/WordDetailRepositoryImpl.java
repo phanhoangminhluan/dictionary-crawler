@@ -21,23 +21,32 @@ public class WordDetailRepositoryImpl implements WordDetailRepository {
     private Navigator navigator;
 
     @Value("${chrome.driver}")
-    private String driver;
+    private String driverStr;
 
     public WordDetailRepositoryImpl() {
     }
 
     @PostConstruct
     public void init() {
-        navigator = new Navigator(driver);
+        navigator = new Navigator(driverStr);
     }
 
     @Override
-    public WordDetail getWord(String word) {
+    public WordDetail getWord(String word) throws Exception{
 
         WebDriver driver = navigator.getDriver();
-        navigator.navigateTo(CommonConstants.BASE_URL + word);
+        try {
+            navigator.navigateTo(CommonConstants.BASE_URL + word);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return WordDetail.builder().word("please stop now").build();
+        }
 
-        if (driver.getCurrentUrl().equals(CommonConstants.WORD_NOT_FOUND_URL)) return null;
+        if (driver.getCurrentUrl().equals(CommonConstants.WORD_NOT_FOUND_URL)) {
+//            driver.quit();
+//            navigator = new Navigator();
+            return null;
+        }
 
         String ukPhonetic = navigator.getText(CommonConstants.UK_PHONETIC);
         String usPhonetic = navigator.getText(CommonConstants.US_PHONETIC);
@@ -62,6 +71,9 @@ public class WordDetailRepositoryImpl implements WordDetailRepository {
 
             definitionDetails.add(definitionDetail);
         }
+
+//        driver.quit();
+//        navigator = new Navigator(driverStr);
 
         WordDetail wordDetail = WordDetail.builder()
                 .word(word)

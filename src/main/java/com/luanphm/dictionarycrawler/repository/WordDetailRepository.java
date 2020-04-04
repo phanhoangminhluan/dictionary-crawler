@@ -4,5 +4,5 @@ import com.luanphm.dictionarycrawler.entity.WordDetail;
 
 public interface WordDetailRepository {
 
-    WordDetail getWord(String word);
+    WordDetail getWord(String word) throws Exception;
 }
