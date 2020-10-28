@@ -8,41 +8,76 @@ import com.luanphm.dictionarycrawler.utils.Navigator;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.LocalFileDetector;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 @Repository
 public class WordDetailRepositoryImpl implements WordDetailRepository {
 
-    private Navigator navigator;
+    private Navigator navigator = null;
 
-    @Value("${chrome.driver}")
-    private String driver;
+    private ChromeOptions chromeOptions;
+
+    private WebDriver webDriver;
+
+    @Value("${chrome-url}")
+    private String remoteChromeUrl;
 
     public WordDetailRepositoryImpl() {
     }
 
     @PostConstruct
-    public void init() {
-        navigator = new Navigator(driver);
+    public void init() throws MalformedURLException {
+        this.chromeOptions = new ChromeOptions().setHeadless(true);
+        DesiredCapabilities desiredCapabilities = DesiredCapabilities.chrome();
+        desiredCapabilities.setBrowserName("chrome");
+        chromeOptions.addArguments(
+                "--verbose",
+                "--headless",
+                "--disable-web-security",
+                "--ignore-certificate-errors",
+                "--allow-running-insecure-content",
+                "--allow-insecure-localhost",
+                "--no-sandbox",
+                "--disable-gpu"
+        );
+    }
+
+    @PreDestroy
+    public void destroy() {
+        this.webDriver.quit();
     }
 
     @Override
-    public WordDetail getWord(String word) {
+    public WordDetail getWord(String word) throws MalformedURLException {
+        if (navigator == null) {
+            System.out.println("URL url = new URL(remoteChromeUrl);");
+            URL url = new URL(remoteChromeUrl);
+            System.out.println("this.webDriver = new RemoteWebDriver(url, chromeOptions);");
+            this.webDriver = new RemoteWebDriver(url, chromeOptions);
+            System.out.println("navigator = new Navigator(webDriver);");
+            navigator = new Navigator(webDriver);
+        }
 
-        WebDriver driver = navigator.getDriver();
-        navigator.navigateTo(CommonConstants.BASE_URL + word);
+        this.webDriver.get(CommonConstants.BASE_URL + word);
 
-        if (driver.getCurrentUrl().equals(CommonConstants.WORD_NOT_FOUND_URL)) return null;
+        if (this.webDriver.getCurrentUrl().equals(CommonConstants.WORD_NOT_FOUND_URL)) return null;
 
         String ukPhonetic = navigator.getText(CommonConstants.UK_PHONETIC);
         String usPhonetic = navigator.getText(CommonConstants.US_PHONETIC);
 
-        List<WebElement> definitionBlocks = driver.findElements(By.cssSelector(CommonConstants.DEFINITION_BLOCKS));
+        List<WebElement> definitionBlocks = this.webDriver.findElements(By.cssSelector(CommonConstants.DEFINITION_BLOCKS));
         List<DefinitionDetail> definitionDetails = new ArrayList<>();
         for (WebElement definitionBlock : definitionBlocks) {
 
@@ -62,7 +97,7 @@ public class WordDetailRepositoryImpl implements WordDetailRepository {
 
             definitionDetails.add(definitionDetail);
         }
-
+//        this.webDriver.quit();
         WordDetail wordDetail = WordDetail.builder()
                 .word(word)
                 .definitionDetails(definitionDetails)

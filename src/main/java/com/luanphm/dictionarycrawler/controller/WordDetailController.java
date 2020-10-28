@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.MalformedURLException;
+
 @RestController
 @RequestMapping("word")
 public class WordDetailController {
@@ -16,7 +18,7 @@ public class WordDetailController {
     WordDetailRepository wordDetailRepository;
 
     @GetMapping("{word}")
-    public WordDetail getWord(@PathVariable String word) {
+    public WordDetail getWord(@PathVariable String word) throws MalformedURLException {
         return wordDetailRepository.getWord(word);
     }
 
